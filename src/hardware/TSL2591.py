@@ -1,8 +1,8 @@
-import sys
+import logging
 import time
 
-import smbus
-from RPi import GPIO
+# import smbus
+# from RPi import GPIO
 
 INI_PIN = 4
 
@@ -76,26 +76,34 @@ LUX_DF = 762.0
 MAX_COUNT_100MS = 36863  # 0x8FFF
 MAX_COUNT = 65535  # 0xFFFF
 
+logger = logging.getLogger("TSL2591.py")
+
 
 class TSL2591:
-    def __init__(self, address=ADDR):
-        self.i2c = smbus.SMBus(1)
-        self.address = address
+    def __init__(self, name: str = "Bert Sensor"):  # def __init__(self, address=ADDR):
+        self.name = name
+        # self.i2c = smbus.SMBus(1)
+        # self.address = address
 
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-        GPIO.setup(INI_PIN, GPIO.IN)
+        # GPIO.setmode(GPIO.BCM)
+        # GPIO.setwarnings(False)
+        # GPIO.setup(INI_PIN, GPIO.IN)
 
-        self.ID = self.Read_Byte(ID_REGISTER)
-        if self.ID != 0x50:
-            print("ID = 0x%x" % self.ID)
-            sys.exit()
+        # self.ID = self.Read_Byte(ID_REGISTER)
+        # if self.ID != 0x50:
+        #     print(f"ID = {self.ID}")
+        #     sys.exit()
 
-        self.Enable()
-        self.Set_Gain(MEDIUM_AGAIN)
-        self.Set_IntegralTime(ATIME_100MS)
-        self.Write_Byte(PERSIST_REGISTER, 0x01)
-        self.Disable()
+        # self.Enable()
+        # self.Set_Gain(MEDIUM_AGAIN)
+        # self.Set_IntegralTime(ATIME_100MS)
+        # self.Write_Byte(PERSIST_REGISTER, 0x01)
+        # self.Disable()
+
+    def setup(self):
+        # Does the setup of the addresses and stuff and returns True for success or false for failure.
+        logger.debug("setup() method not implemented yet")
+        return True
 
     def Read_Byte(self, Addr):
         Addr = (COMMAND_BIT | Addr) & 0xFF
@@ -189,58 +197,59 @@ class TSL2591:
 
     @property
     def Lux(self):
-        self.Enable()
-        for i in range(self.IntegralTime + 2):
-            time.sleep(0.1)
-        if GPIO.input(INI_PIN) == GPIO.HIGH:
-            print("INT 0")
-        else:
-            print("INT 1")
-        channel_0 = self.Read_CHAN0()
-        channel_1 = self.Read_CHAN1()
-        self.Disable()
+        # self.Enable()
+        # for i in range(self.IntegralTime + 2):
+        #     time.sleep(0.1)
+        # # if GPIO.input(INI_PIN) == GPIO.HIGH:
+        # #     print("INT 0")
+        # # else:
+        # #     print("INT 1")
+        # # channel_0 = self.Read_CHAN0()
+        # # channel_1 = self.Read_CHAN1()
+        # self.Disable()
 
-        self.Enable()
-        self.Write_Byte(0xE7, 0x13)  # Clear interrupt flag
-        self.Disable()
+        # self.Enable()
+        # self.Write_Byte(0xE7, 0x13)  # Clear interrupt flag
+        # self.Disable()
 
-        atime = 100.0 * self.IntegralTime + 100.0
+        # atime = 100.0 * self.IntegralTime + 100.0
 
-        # Set the maximum sensor counts based on the integration time (atime) setting
-        if self.IntegralTime == ATIME_100MS:
-            max_counts = MAX_COUNT_100MS
-        else:
-            max_counts = MAX_COUNT
+        # # Set the maximum sensor counts based on the integration time (atime) setting
+        # if self.IntegralTime == ATIME_100MS:
+        #     max_counts = MAX_COUNT_100MS
+        # else:
+        #     max_counts = MAX_COUNT
 
-        if channel_0 >= max_counts or channel_1 >= max_counts:
-            gain_t = self.Get_Gain()
-            if gain_t != LOW_AGAIN:
-                gain_t = ((gain_t >> 4) - 1) << 4
-                self.Set_Gain(gain_t)
-                channel_0 = 0
-                channel_1 = 0
-                while channel_0 <= 0 and channel_1 <= 0:
-                    channel_0 = self.Read_CHAN0()
-                    channel_1 = self.Read_CHAN1()
-                    time.sleep(0.1)
-            else:
-                raise RuntimeError("Numerical overflow!")
-        again = 1.0
-        if self.Gain == MEDIUM_AGAIN:
-            again = 25.0
-        elif self.Gain == HIGH_AGAIN:
-            again = 428.0
-        elif self.Gain == MAX_AGAIN:
-            again = 9876.0
+        # if channel_0 >= max_counts or channel_1 >= max_counts:
+        #     gain_t = self.Get_Gain()
+        #     if gain_t != LOW_AGAIN:
+        #         gain_t = ((gain_t >> 4) - 1) << 4
+        #         self.Set_Gain(gain_t)
+        #         channel_0 = 0
+        #         channel_1 = 0
+        #         while channel_0 <= 0 and channel_1 <= 0:
+        #             channel_0 = self.Read_CHAN0()
+        #             channel_1 = self.Read_CHAN1()
+        #             time.sleep(0.1)
+        #     else:
+        #         raise RuntimeError("Numerical overflow!")
+        # again = 1.0
+        # if self.Gain == MEDIUM_AGAIN:
+        #     again = 25.0
+        # elif self.Gain == HIGH_AGAIN:
+        #     again = 428.0
+        # elif self.Gain == MAX_AGAIN:
+        #     again = 9876.0
 
-        Cpl = (atime * again) / LUX_DF
-        lux1 = (channel_0 - (2 * channel_1)) / Cpl
+        # Cpl = (atime * again) / LUX_DF
+        # lux1 = (channel_0 - (2 * channel_1)) / Cpl
         # lux2 = ((0.6 * channel_0) - (channel_1)) / Cpl
         # This is a two segment lux equation where the first
         # segment (Lux1) covers fluorescent and incandescent light
         # and the second segment (Lux2) covers dimmed incandescent light
 
-        return max(int(lux1), 0)
+        # return max(int(lux1), 0)
+        pass
 
     def SET_InterruptThreshold(self, HIGH, LOW):
         self.Enable()
@@ -285,3 +294,21 @@ class TSL2591:
         self.Write_Byte(NPAIHTL_REGISTER, 0xFF)
         self.Write_Byte(NPAIHTH_REGISTER, 0xFF)
         self.Disable()
+
+    def get_lux(self) -> float:
+        logger.debug("get_lux() method is not implemented yet")
+        lux = 0.1  # just to return a value
+        return lux
+
+    def loop(self, intervalSeconds: float = 0.1, durationSeconds: float = 10):
+        logger.debug(f"Running Sensor Loop for {durationSeconds} sec")
+        time_start = time.perf_counter()
+        while True:
+            current_lux = self.get_lux()
+            logger.info(f"Lux Measurement: {current_lux}")
+
+            time_now = time.perf_counter()
+            time_running = time_now - time_start
+            if time_running > durationSeconds:
+                break
+            time.sleep(intervalSeconds)  # Added to lower cpu usage, Default: 0.1s
