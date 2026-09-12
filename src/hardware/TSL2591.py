@@ -1,4 +1,5 @@
 import logging
+import sys
 import time
 
 # import smbus
@@ -99,11 +100,32 @@ class TSL2591:
         # self.Set_IntegralTime(ATIME_100MS)
         # self.Write_Byte(PERSIST_REGISTER, 0x01)
         # self.Disable()
+        if not self.setup():
+            logger.error("Light Sensor Setup Failed. Exiting...")
+            sys.exit()
 
     def setup(self):
         # Does the setup of the addresses and stuff and returns True for success or false for failure.
-        logger.debug("setup() method not implemented yet")
+        print("setup() method not implemented yet")
         return True
+
+    def poll(self) -> float:
+        print("poll() method is not implemented yet")
+        lux = 0.1  # just to return a value
+        return lux
+
+    def loop(self, intervalSeconds: float = 0.1, durationSeconds: float = 0):
+        print(f"Running Sensor Loop for {durationSeconds} sec")
+        time_start = time.perf_counter()
+        time_running = 0
+        while durationSeconds > time_running or durationSeconds < 1e-6:
+            current_lux = self.poll()
+            print(f"Lux Measurement: {current_lux}")
+            # Do logic and return the result
+            time_now = time.perf_counter()
+            time_running = time_now - time_start
+            print(f"Time running loop: {format(time_running, '.1f')} sec")
+            time.sleep(intervalSeconds)  # Added to lower cpu usage, Default: 0.1s
 
     def Read_Byte(self, Addr):
         Addr = (COMMAND_BIT | Addr) & 0xFF
@@ -295,20 +317,12 @@ class TSL2591:
         self.Write_Byte(NPAIHTH_REGISTER, 0xFF)
         self.Disable()
 
-    def get_lux(self) -> float:
-        logger.debug("get_lux() method is not implemented yet")
-        lux = 0.1  # just to return a value
-        return lux
 
-    def loop(self, intervalSeconds: float = 0.1, durationSeconds: float = 10):
-        logger.debug(f"Running Sensor Loop for {durationSeconds} sec")
-        time_start = time.perf_counter()
-        while True:
-            current_lux = self.get_lux()
-            logger.info(f"Lux Measurement: {current_lux}")
+if __name__ == "__main__":
+    light_sensor = TSL2591()
 
-            time_now = time.perf_counter()
-            time_running = time_now - time_start
-            if time_running > durationSeconds:
-                break
-            time.sleep(intervalSeconds)  # Added to lower cpu usage, Default: 0.1s
+    if not light_sensor.setup():
+        print("Light Sensor Setup Failed. Exiting...")
+
+    print("Light Sensor Initialised. Main Loop Starts.")
+    light_sensor.loop()
